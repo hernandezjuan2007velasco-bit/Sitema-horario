@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SENA - Control de Asistencia Institucional</title>
+  <link rel="stylesheet" href="antigravity.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- 1. PANTALLA DE AUTENTICACIÓN (LOGIN Y REGISTRO) - VISIBLE POR DEFECTO -->
+  <section id="authScreen" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo-sena">
+          <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+        </div>
+        <h1 class="auth-title">Servicio Nacional de Aprendizaje</h1>
+        <p class="auth-subtitle">Sistema de Control de Asistencia y Gestión de Fichas</p>
+      </div>
+
+      <div class="auth-tabs" role="tablist">
+        <button type="button" id="tabLogin" class="auth-tab active" onclick="switchAuthTab('login')">
+          Iniciar Sesión
+        </button>
+        <button type="button" id="tabRegister" class="auth-tab" onclick="switchAuthTab('register')">
+          Registrarse
+        </button>
+      </div>
+
+      <!-- FORMULARIO: INICIAR SESIÓN -->
+      <form id="formLogin" class="auth-form active" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="loginEmail" class="form-label">Correo Electrónico Institucional:</label>
+          <input type="email" id="loginEmail" class="form-input" placeholder="ejemplo@misena.edu.co" value="carlos.rodriguez@sena.edu.co" required>
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword" class="form-label">Contraseña:</label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" value="123456" required>
+        </div>
+
+        <div class="form-group">
+          <label for="loginRole" class="form-label">Rol en el Centro de Formación:</label>
+          <select id="loginRole" class="form-select">
+            <option value="instructor">Instructor Técnico / Vocacional</option>
+            <option value="coordinador">Coordinador Académico</option>
+            <option value="apoyo">Apoyo Administrativo / Registro</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">
+          <span>Ingresar al Sistema</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+          </svg>
+        </button>
+
+        <div class="auth-help-box">
+          <small>💡 Utilice sus credenciales institucionales habilitadas para su centro de formación.</small>
+        </div>
+      </form>
+
+      <!-- FORMULARIO: REGISTRO -->
+      <form id="formRegister" class="auth-form" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label for="regName" class="form-label">Nombres y Apellidos Completos:</label>
+          <input type="text" id="regName" class="form-input" placeholder="Ej: María Camila Torres Silva" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="regDocType" class="form-label">Tipo de Documento:</label>
+            <select id="regDocType" class="form-select">
+              <option value="CC">Cédula de Ciudadanía (CC)</option>
+              <option value="TI">Tarjeta de Identidad (TI)</option>
+              <option value="CE">Cédula de Extranjería (CE)</option>
+            </select>
+          </div>
+          <div class="form-group flex-1">
+            <label for="regDocNumber" class="form-label">Número de Documento:</label>
+            <input type="text" id="regDocNumber" class="form-input" placeholder="Ej: 1014298301" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="regEmail" class="form-label">Correo Institucional (@sena / @misena):</label>
+          <input type="email" id="regEmail" class="form-input" placeholder="usuario@sena.edu.co" required>
+        </div>
+
+        <div class="form-group">
+          <label for="regPassword" class="form-label">Crear Contraseña:</label>
+          <input type="password" id="regPassword" class="form-input" placeholder="Mínimo 6 caracteres" minlength="6" required>
+        </div>
+
+        <div class="form-group">
+          <label for="regRole" class="form-label">Asignación de Rol:</label>
+          <select id="regRole" class="form-select">
+            <option value="instructor">Instructor Técnico</option>
+            <option value="coordinador">Coordinador Académico</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">
+          <span>Crear Cuenta e Ingresar</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <span>Regional Distrito Capital • Centro de Formación</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. PANEL PRINCIPAL (SE MUESTRA TRAS EL LOGIN) -->
+  <div id="mainAppScreen" class="app-layout" style="display: none;">
+    <div id="drawerOverlay" class="drawer-overlay" onclick="toggleDrawer()"></div>
+
+    <!-- MENÚ LATERAL (DRAWER) -->
+    <aside id="appDrawer" class="app-drawer">
+      <div class="drawer-header">
+        <div class="brand-container">
+          <div class="sena-logo-badge">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+          </div>
+          <div class="brand-text">
+            <span class="brand-title">SENA</span>
+            <span class="brand-subtitle">Control de Asistencia</span>
+          </div>
+        </div>
+        <button class="btn-icon drawer-close-btn" onclick="toggleDrawer()" title="Cerrar">&times;</button>
+      </div>
+
+      <div class="drawer-user-info">
+        <div class="user-avatar" id="currentUserInitial">IN</div>
+        <div class="user-meta">
+          <span class="user-name" id="currentUserName">Instructor SENA</span>
+          <span class="user-role-badge" id="currentUserRole">Instructor Técnico</span>
+        </div>
+      </div>
+
+      <nav class="drawer-nav">
+        <div class="nav-section-title">OPCIONES PRINCIPALES</div>
+
+        <a href="#control" class="nav-item active" data-view="attendance" onclick="switchView('attendance', event)">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+          </svg>
+          <span>Control de Asistencia</span>
+        </a>
+
+        <a href="#escaneo-qr" class="nav-item" data-view="qr" onclick="switchView('qr', event)">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+          </svg>
+          <span>Registro de Código QR</span>
+        </a>
+
+        <a href="#fichas" class="nav-item" data-view="fichas" onclick="switchView('fichas', event)">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+          <span>Carga de Fichas de Formación</span>
+        </a>
+
+        <a href="#reportes" class="nav-item" data-view="reports" onclick="switchView('reports', event)">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <span>Generación de Reportes</span>
+        </a>
+
+        <div class="nav-section-title" style="margin-top: 1.5rem;">SESIÓN</div>
+
+        <button type="button" class="nav-item nav-item-logout" onclick="handleLogout()">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          <span>Cerrar Sesión</span>
+        </button>
+      </nav>
+
+      <div class="drawer-footer">
+        <span>SENA • Regional Distrito Capital</span>
+      </div>
+    </aside>
+
+    <!-- ÁREA PRINCIPAL -->
+    <div class="app-main-wrapper">
+      <header class="top-navbar">
+        <div class="navbar-left">
+          <button class="btn-icon drawer-toggle-btn" onclick="toggleDrawer()" title="Abrir/Cerrar Menú">
+            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+          <div class="app-branding-compact">
+            <span class="sena-tag">SENA</span>
+            <h2 class="page-title" id="pageTitle">Control de Asistencia</h2>
+          </div>
+        </div>
+
+        <div class="navbar-right">
+          <div class="active-ficha-badge" id="activeFichaBadge">
+            <span class="dot-indicator"></span>
+            <span id="activeFichaText">Sin Ficha Cargada</span>
+          </div>
+
+          <div class="system-date-chip">
+            <span id="currentDateText">Cargando fecha...</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content-area">
+        <!-- VISTA 1: CONTROL DE ASISTENCIA Y TABLA CON DENSIDAD ADAPTATIVA -->
+        <section id="viewAttendance" class="content-view active">
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-icon icon-primary">
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+              </div>
+              <div class="kpi-content">
+                <span class="kpi-label">Aprendices en Lista</span>
+                <span class="kpi-value" id="kpiTotalStudents">0</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon icon-success">
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <div class="kpi-content">
+                <span class="kpi-label">Asistieron Hoy</span>
+                <span class="kpi-value text-success" id="kpiPresent">0</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon icon-warning">
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <div class="kpi-content">
+                <span class="kpi-label">Retardos / Excusas</span>
+                <span class="kpi-value text-warning" id="kpiLateExcused">0</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon icon-danger">
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+              </div>
+              <div class="kpi-content">
+                <span class="kpi-label">Alerta por Fallas (>15%)</span>
+                <span class="kpi-value text-danger" id="kpiCriticalAbsences">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- TOOLBAR Y CONTROL DE DENSIDAD -->
+          <div class="toolbar-card">
+            <div class="toolbar-row-top">
+              <div class="search-group">
+                <label for="studentSearchInput" class="form-label">Buscar Aprendiz:</label>
+                <div class="search-input-wrapper">
+                  <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" class="search-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                  </svg>
+                  <input type="text" id="studentSearchInput" class="form-input" placeholder="Buscar por nombre o número de documento..." oninput="onSearchInput()">
+                  <button id="clearSearchBtn" class="btn-clear-search" onclick="clearSearch()" title="Limpiar">&times;</button>
+                </div>
+              </div>
+
+              <!-- SELECTOR DE DENSIDAD DE TABLA -->
+              <div class="density-group">
+                <label class="form-label">Densidad de la Tabla:</label>
+                <div class="density-toggle-buttons">
+                  <button type="button" id="btnDensityCompact" class="btn-density active" onclick="setTableDensity('compact')" title="Vista Compacta: Ideal para pantallas de computador">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                    <span>Vista Compacta (PC)</span>
+                  </button>
+                  <button type="button" id="btnDensityComfortable" class="btn-density" onclick="setTableDensity('comfortable')" title="Vista Cómoda: Celdas amplias para celulares y tabletas">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                    <span>Vista Cómoda (Táctil)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="toolbar-row-bottom">
+              <div class="actions-left">
+                <button class="btn btn-primary" onclick="markAllPresent()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  <span>Marcar Todos Presentes</span>
+                </button>
+
+                <button class="btn btn-outline" onclick="resetTodayAttendance()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                  <span>Reiniciar Jornada</span>
+                </button>
+              </div>
+
+              <div class="actions-right">
+                <button class="btn btn-secondary" onclick="switchView('qr')">
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                  </svg>
+                  <span>Lector QR</span>
+                </button>
+
+                <button class="btn btn-success" onclick="exportAttendanceCSV()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                  </svg>
+                  <span>Descargar Reporte CSV</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- TABLA (INICIA TOTALMENTE VACÍA) -->
+          <div class="table-container-card">
+            <div class="table-header-meta">
+              <span class="showing-count" id="tableRecordCount">La tabla no contiene aprendices cargados.</span>
+              <div class="legend-badges">
+                <span class="legend-badge legend-green">Asistió</span>
+                <span class="legend-badge legend-red">Faltó</span>
+                <span class="legend-badge legend-amber">Retardo</span>
+                <span class="legend-badge legend-blue">Excusado</span>
+                <span class="legend-badge legend-critical">⚠️ Más del 15% de Fallas</span>
+              </div>
+            </div>
+
+            <div class="table-responsive-wrapper">
+              <table id="attendanceTable" class="attendance-table density-compact">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">#</th>
+                    <th style="min-width: 220px;">Aprendiz</th>
+                    <th style="min-width: 130px;">Documento</th>
+                    <th style="min-width: 130px;">Hora de Registro</th>
+                    <th style="min-width: 170px;">Inasistencias Acumuladas</th>
+                    <th style="min-width: 260px;">Registro de Hoy</th>
+                    <th style="width: 80px; text-align: center;">Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="attendanceTableBody">
+                  <!-- Se llena dinámicamente -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- VISTA 2: ESCANEO QR -->
+        <section id="viewQr" class="content-view">
+          <div class="view-header">
+            <h2>Módulo de Escaneo y Registro por Código QR</h2>
+            <p class="view-subtitle">Registre la asistencia de los aprendices escaneando su carné o ingresando su documento.</p>
+          </div>
+
+          <div class="qr-screen-grid">
+            <div class="scanner-card">
+              <div class="scanner-viewport">
+                <div class="scanner-laser"></div>
+                <div class="scanner-corner corner-tl"></div>
+                <div class="scanner-corner corner-tr"></div>
+                <div class="scanner-corner corner-bl"></div>
+                <div class="scanner-corner corner-br"></div>
+                
+                <div class="scanner-reticle">
+                  <svg viewBox="0 0 24 24" width="70" height="70" stroke="currentColor" fill="none" stroke-width="1.5" class="qr-target-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                  </svg>
+                  <span class="scanner-instruction">Acerque el código QR o código de barras del carné</span>
+                </div>
+              </div>
+
+              <div class="scanner-input-box">
+                <label for="barcodeInput" class="form-label">Ingreso por Documento o Lector USB:</label>
+                <div class="input-with-button">
+                  <input type="text" id="barcodeInput" class="form-input" placeholder="Ej: 1014298301" onkeydown="if(event.key==='Enter') executeScanManual()">
+                  <button class="btn btn-primary" onclick="executeScanManual()">Registrar</button>
+                </div>
+                <small class="helper-text">💡 Puede escribir la cédula y presionar Enter o usar una pistola lectora.</small>
+              </div>
+            </div>
+
+            <div class="scanner-panel-right">
+              <div class="quick-simulation-card">
+                <h3>Simulación Rápida de Escaneo</h3>
+                <p class="helper-text" id="qrSimulationHelperText">Seleccione un aprendiz de la lista para simular la lectura de su carné:</p>
+                <div class="quick-cards-container" id="qrQuickCardsContainer"></div>
+              </div>
+
+              <div class="scan-log-card">
+                <h4>Historial Reciente de Lecturas</h4>
+                <div class="scan-log-list" id="scanLogList">
+                  <div class="log-entry log-info">[Listo] Lector preparado para registrar asistencias...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VISTA 3: CARGA DE FICHAS -->
+        <section id="viewFichas" class="content-view">
+          <div class="view-header">
+            <h2>Carga y Gestión de Fichas de Formación</h2>
+            <p class="view-subtitle">Seleccione una ficha de formación técnica para cargar su listado de aprendices en el control de asistencia o añada nuevos aprendices.</p>
+          </div>
+
+          <div class="fichas-grid">
+            <div class="ficha-selection-card">
+              <h3>Fichas Disponibles en el Centro</h3>
+              <p class="helper-text">Haga clic en cualquiera de las siguientes fichas para cargar sus aprendices en la tabla:</p>
+
+              <div class="available-fichas-list">
+                <div class="available-ficha-item" onclick="loadOfficialFicha('2670142')">
+                  <div class="ficha-item-info">
+                    <span class="ficha-number">Ficha 2670142</span>
+                    <span class="ficha-title">ADSO (Análisis y Desarrollo de Software)</span>
+                    <span class="ficha-meta">35 Aprendices • Jornada Diurna</span>
+                  </div>
+                  <button class="btn btn-outline btn-sm">Cargar Esta Ficha</button>
+                </div>
+
+                <div class="available-ficha-item" onclick="loadOfficialFicha('2712984')">
+                  <div class="ficha-item-info">
+                    <span class="ficha-number">Ficha 2712984</span>
+                    <span class="ficha-title">Redes de Datos e Infraestructura</span>
+                    <span class="ficha-meta">15 Aprendices • Jornada Mixta</span>
+                  </div>
+                  <button class="btn btn-outline btn-sm">Cargar Esta Ficha</button>
+                </div>
+
+                <div class="available-ficha-item" onclick="loadOfficialFicha('2821035')">
+                  <div class="ficha-item-info">
+                    <span class="ficha-number">Ficha 2821035</span>
+                    <span class="ficha-title">Animación y Contenidos Digitales</span>
+                    <span class="ficha-meta">12 Aprendices • Jornada Nocturna</span>
+                  </div>
+                  <button class="btn btn-outline btn-sm">Cargar Esta Ficha</button>
+                </div>
+              </div>
+
+              <div style="margin-top: 1.25rem;">
+                <button class="btn btn-outline btn-block" onclick="clearCurrentFicha()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                  <span>Vaciar Tabla de Asistencia Actual</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="ficha-add-card">
+              <h3>Agregar Aprendiz a la Lista</h3>
+              <p class="helper-text">Ingrese los datos para registrar un aprendiz individualmente en la sesión activa:</p>
+
+              <form id="formAddStudent" onsubmit="handleAddStudent(event)">
+                <div class="form-group">
+                  <label for="newStudentName" class="form-label">Nombre Completo del Aprendiz:</label>
+                  <input type="text" id="newStudentName" class="form-input" placeholder="Ej: Juan Sebastián Gómez" required>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group flex-1">
+                    <label for="newStudentDocType" class="form-label">Tipo Doc:</label>
+                    <select id="newStudentDocType" class="form-select">
+                      <option value="CC">CC</option>
+                      <option value="TI">TI</option>
+                      <option value="CE">CE</option>
+                    </select>
+                  </div>
+                  <div class="form-group flex-2">
+                    <label for="newStudentDoc" class="form-label">Número de Documento:</label>
+                    <input type="text" id="newStudentDoc" class="form-input" placeholder="Ej: 1024567890" required>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="newStudentEmail" class="form-label">Correo Institucional:</label>
+                  <input type="email" id="newStudentEmail" class="form-input" placeholder="usuario@misena.edu.co" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                  </svg>
+                  <span>Registrar Aprendiz en la Ficha</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- VISTA 4: REPORTES -->
+        <section id="viewReports" class="content-view">
+          <div class="view-header">
+            <h2>Generación de Reportes de Asistencia</h2>
+            <p class="view-subtitle">Genere y descargue archivos consolidados de asistencia en formatos compatibles con Excel.</p>
+          </div>
+
+          <div class="reports-grid">
+            <div class="report-card">
+              <h3>Descargar Reporte en Hoja de Cálculo</h3>
+              <p>Descargue el listado completo con porcentajes de inasistencia, firmas de tiempo y advertencias por superar el límite del 15% de fallas.</p>
+              
+              <div style="margin-top: 1.5rem;">
+                <button class="btn btn-success btn-large" onclick="exportAttendanceCSV()">
+                  <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                  </svg>
+                  <span>Descargar Archivo CSV (Compatible con Excel)</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="report-card">
+              <h3>Resumen de la Sesión Actual</h3>
+              <div class="report-summary-list" id="reportSummaryList">
+                <div class="empty-state-text">Cargue una ficha de formación para visualizar el resumen.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
+  <script src="antigravity.js"></script>
+</body>
+</html>
